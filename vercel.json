@@ -8,10 +8,6 @@
   ],
   "routes": [
     {
-      "src": "/index.css",
-      "dest": "/index.css"
-    },
-    {
       "src": "/(.*)",
       "dest": "app.py"
     }
