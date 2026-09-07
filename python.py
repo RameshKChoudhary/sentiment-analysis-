@@ -4,9 +4,19 @@ import requests
 import feedparser
 import re
 from urllib.parse import quote
-from datetime import datetime
 
-app = Flask(__name__)
+
+# =========================================================
+# FLASK CONFIGURATION
+# =========================================================
+
+# index.html and index.css are in the same folder as python.py
+app = Flask(
+    __name__,
+    template_folder=".",
+    static_folder=".",
+    static_url_path=""
+)
 
 
 # =========================================================
@@ -86,7 +96,6 @@ def search_live(keyword):
 
     encoded = quote(keyword)
 
-    # Google News RSS search
     url = (
         "https://news.google.com/rss/search?"
         f"q={encoded}"
@@ -131,7 +140,7 @@ def search_live(keyword):
                 ""
             )
 
-            # Remove HTML
+            # Remove HTML from description
             description = re.sub(
                 r"<[^>]+>",
                 " ",
@@ -144,8 +153,7 @@ def search_live(keyword):
                 description
             )
 
-            sentiment, score = \
-                analyze_sentiment(text)
+            sentiment, score = analyze_sentiment(text)
 
             published = entry.get(
                 "published",
@@ -159,10 +167,7 @@ def search_live(keyword):
 
             source_name = ""
 
-            if hasattr(
-                source,
-                "get"
-            ):
+            if hasattr(source, "get"):
 
                 source_name = source.get(
                     "title",
@@ -170,9 +175,7 @@ def search_live(keyword):
                 )
 
             if not source_name:
-
                 source_name = "News"
-
 
             results.append({
 
@@ -193,9 +196,7 @@ def search_live(keyword):
 
             })
 
-
         return results, None
-
 
     except Exception as error:
 
@@ -216,9 +217,7 @@ def calculate_results(posts):
     total = len(posts)
 
     if total == 0:
-
         return 0, 0, 0, 0
-
 
     positive_count = sum(
         1
@@ -238,7 +237,6 @@ def calculate_results(posts):
         if p["sentiment"] == "negative"
     )
 
-
     positive = round(
         positive_count / total * 100
     )
@@ -247,8 +245,8 @@ def calculate_results(posts):
         neutral_count / total * 100
     )
 
+    # Make sure percentages always equal 100
     negative = 100 - positive - neutral
-
 
     return (
         positive,
@@ -259,7 +257,7 @@ def calculate_results(posts):
 
 
 # =========================================================
-# GET ANSWER
+# GENERATE ANSWER
 # =========================================================
 
 def generate_answer(
@@ -274,9 +272,9 @@ def generate_answer(
 
         return (
             f"No recent results were found "
-            f"for '{keyword}'. Try another keyword."
+            f"for '{keyword}'. "
+            f"Try another keyword."
         )
-
 
     if positive >= negative and positive >= neutral:
 
@@ -289,7 +287,6 @@ def generate_answer(
     else:
 
         overall = "Neutral"
-
 
     return (
         f"Based on {total} recent search results "
@@ -324,7 +321,6 @@ def home():
         negative,
         total
     )
-
 
     return render_template(
         "index.html",
@@ -362,26 +358,20 @@ def analyze():
         ""
     ).strip()
 
-
     if not keyword:
-
         keyword = "artificial intelligence"
-
 
     print(
         "Searching:",
         keyword
     )
 
-
     posts, error = search_live(
         keyword
     )
 
-
     positive, neutral, negative, total = \
         calculate_results(posts)
-
 
     answer = generate_answer(
         keyword,
@@ -390,7 +380,6 @@ def analyze():
         negative,
         total
     )
-
 
     return render_template(
         "index.html",
@@ -425,15 +414,15 @@ def api_analyze():
         "artificial intelligence"
     ).strip()
 
+    if not keyword:
+        keyword = "artificial intelligence"
 
     posts, error = search_live(
         keyword
     )
 
-
     positive, neutral, negative, total = \
         calculate_results(posts)
-
 
     answer = generate_answer(
         keyword,
@@ -442,7 +431,6 @@ def api_analyze():
         negative,
         total
     )
-
 
     return jsonify({
 
