@@ -1,0 +1,996 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>SentimentAI | Live Sentiment Analysis</title>
+
+    <!-- FLASK CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='index.css') }}?v=2"
+    >
+
+    <!-- CHART.JS -->
+    <script
+        src="https://cdn.jsdelivr.net/npm/chart.js">
+    </script>
+
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <div class="logo">
+
+        <div class="logo-icon">
+            S
+        </div>
+
+        <div>
+            <h2>SentimentAI</h2>
+
+            <span>
+                Live Sentiment Analysis
+            </span>
+        </div>
+
+    </div>
+
+    <nav>
+
+        <a href="#dashboard">
+            Dashboard
+        </a>
+
+        <a href="#analysis">
+            Analysis
+        </a>
+
+        <a href="#about">
+            About
+        </a>
+
+    </nav>
+
+</header>
+
+
+<!-- HERO -->
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <div class="badge">
+            ● LIVE DATA ANALYSIS
+        </div>
+
+        <h1>
+            Social Media
+            <span>Sentiment Analysis</span>
+        </h1>
+
+        <p>
+            Search any topic and analyze current online
+            discussions using Natural Language Processing.
+            The system classifies the latest results as
+            positive, neutral, or negative.
+        </p>
+
+
+        <form
+            action="{{ url_for('analyze') }}"
+            method="POST"
+            class="search-box"
+        >
+
+            <input
+                type="text"
+                name="keyword"
+                placeholder="Search any topic..."
+                value="{{ keyword or '' }}"
+                autocomplete="off"
+                required
+            >
+
+            <button type="submit">
+                🔍 Analyze
+            </button>
+
+        </form>
+
+
+        <div class="examples">
+
+            Popular searches:
+
+            <button
+                type="button"
+                onclick="searchTopic('AI')"
+            >
+                AI
+            </button>
+
+            <button
+                type="button"
+                onclick="searchTopic('ChatGPT')"
+            >
+                ChatGPT
+            </button>
+
+            <button
+                type="button"
+                onclick="searchTopic('Tesla')"
+            >
+                Tesla
+            </button>
+
+            <button
+                type="button"
+                onclick="searchTopic('iPhone')"
+            >
+                iPhone
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- DASHBOARD -->
+
+<section
+    id="dashboard"
+    class="dashboard"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="small-title">
+                LIVE OVERVIEW
+            </p>
+
+            <h2>
+                Sentiment Dashboard
+            </h2>
+
+        </div>
+
+
+        {% if keyword %}
+
+        <div class="keyword-result">
+
+            🔎 Analyzing:
+
+            <strong>
+                {{ keyword }}
+            </strong>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if error %}
+
+    <div class="error-box">
+
+        ⚠️
+
+        <span>
+            {{ error }}
+        </span>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- STATISTICS -->
+
+    <div class="stats">
+
+
+        <div class="stat-card positive">
+
+            <div class="stat-top">
+
+                <span class="stat-icon">
+                    😊
+                </span>
+
+                <span>
+                    Positive
+                </span>
+
+            </div>
+
+            <h3 id="positiveValue">
+                {{ positive or 0 }}%
+            </h3>
+
+            <p>
+                Positive results
+            </p>
+
+        </div>
+
+
+        <div class="stat-card neutral">
+
+            <div class="stat-top">
+
+                <span class="stat-icon">
+                    😐
+                </span>
+
+                <span>
+                    Neutral
+                </span>
+
+            </div>
+
+            <h3 id="neutralValue">
+                {{ neutral or 0 }}%
+            </h3>
+
+            <p>
+                Neutral results
+            </p>
+
+        </div>
+
+
+        <div class="stat-card negative">
+
+            <div class="stat-top">
+
+                <span class="stat-icon">
+                    😠
+                </span>
+
+                <span>
+                    Negative
+                </span>
+
+            </div>
+
+            <h3 id="negativeValue">
+                {{ negative or 0 }}%
+            </h3>
+
+            <p>
+                Negative results
+            </p>
+
+        </div>
+
+
+        <div class="stat-card total">
+
+            <div class="stat-top">
+
+                <span class="stat-icon">
+                    📊
+                </span>
+
+                <span>
+                    Total Results
+                </span>
+
+            </div>
+
+            <h3 id="totalValue">
+                {{ total or 0 }}
+            </h3>
+
+            <p>
+                Results analyzed
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- CHART -->
+
+    <div class="chart-grid">
+
+
+        <div class="chart-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <h3>
+                        Sentiment Distribution
+                    </h3>
+
+                    <p>
+                        Analysis of current search results
+                    </p>
+
+                </div>
+
+                <span class="live-indicator">
+                    ● LIVE
+                </span>
+
+            </div>
+
+
+            <div class="chart-container">
+
+                <canvas id="sentimentChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- SUMMARY -->
+
+        <div class="summary-card">
+
+            <p class="small-title">
+                ANALYSIS RESULT
+            </p>
+
+            <h3>
+                Overall Sentiment
+            </h3>
+
+
+            <div
+                class="main-sentiment"
+                id="overallSentiment"
+            >
+
+                {% if positive >= negative and positive >= neutral %}
+
+                    <span class="big-emoji">
+                        😊
+                    </span>
+
+                    <span>
+                        Positive
+                    </span>
+
+                {% elif negative >= positive and negative >= neutral %}
+
+                    <span class="big-emoji">
+                        😠
+                    </span>
+
+                    <span>
+                        Negative
+                    </span>
+
+                {% else %}
+
+                    <span class="big-emoji">
+                        😐
+                    </span>
+
+                    <span>
+                        Neutral
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="answer-box">
+
+                <p class="small-title">
+                    AI ANALYSIS
+                </p>
+
+                <p id="answerText">
+
+                    {{ answer or "Search a topic to start analysis." }}
+
+                </p>
+
+            </div>
+
+
+            <div class="confidence">
+
+                <span>
+                    Data Status
+                </span>
+
+                <strong id="statusText">
+                    Live
+                </strong>
+
+            </div>
+
+
+            <div class="progress">
+
+                <div
+                    id="progressBar"
+                    style="width:100%;"
+                ></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- RESULTS -->
+
+<section
+    id="analysis"
+    class="posts-section"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="small-title">
+                LIVE SEARCH RESULTS
+            </p>
+
+            <h2>
+                Recent Results
+            </h2>
+
+        </div>
+
+
+        {% if total %}
+
+        <span class="result-count">
+
+            {{ total }} results found
+
+        </span>
+
+        {% endif %}
+
+    </div>
+
+
+    <div
+        class="posts"
+        id="postsContainer"
+    >
+
+        {% if posts %}
+
+            {% for post in posts %}
+
+            <div class="post">
+
+                <div class="post-user">
+
+                    <div class="avatar">
+
+                        {{ post.user[0] | upper }}
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            {{ post.user }}
+                        </strong>
+
+                        <span>
+                            {{ post.time }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <p class="post-text">
+
+                    <a
+                        href="{{ post.link }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        {{ post.text }}
+                    </a>
+
+                </p>
+
+
+                <div class="post-bottom">
+
+                    <span
+                        class="sentiment {{ post.sentiment }}"
+                    >
+
+                        {% if post.sentiment == "positive" %}
+
+                            😊 Positive
+
+                        {% elif post.sentiment == "negative" %}
+
+                            😠 Negative
+
+                        {% else %}
+
+                            😐 Neutral
+
+                        {% endif %}
+
+                    </span>
+
+
+                    <span class="score">
+
+                        Score:
+                        {{ post.score }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="empty-result">
+
+                <div>
+                    🔍
+                </div>
+
+                <h3>
+                    No results found
+                </h3>
+
+                <p>
+                    Search for a topic to analyze current data.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</section>
+
+
+<!-- ABOUT -->
+
+<section
+    id="about"
+    class="technology"
+>
+
+    <div class="section-heading center">
+
+        <p class="small-title">
+            PROJECT TECHNOLOGY
+        </p>
+
+        <h2>
+            How It Works
+        </h2>
+
+        <p>
+            The system searches current online content,
+            processes the text using NLP, and classifies
+            the sentiment automatically.
+        </p>
+
+    </div>
+
+
+    <div class="tech-grid">
+
+
+        <div class="tech-card">
+
+            <div>
+                🌐
+            </div>
+
+            <h3>
+                Live Search
+            </h3>
+
+            <p>
+                Fetches current results based on your
+                search keyword.
+            </p>
+
+        </div>
+
+
+        <div class="tech-card">
+
+            <div>
+                🐍
+            </div>
+
+            <h3>
+                Python
+            </h3>
+
+            <p>
+                Collects and processes the retrieved
+                information.
+            </p>
+
+        </div>
+
+
+        <div class="tech-card">
+
+            <div>
+                🧠
+            </div>
+
+            <h3>
+                NLP
+            </h3>
+
+            <p>
+                Identifies positive, neutral and negative
+                language patterns.
+            </p>
+
+        </div>
+
+
+        <div class="tech-card">
+
+            <div>
+                📊
+            </div>
+
+            <h3>
+                Visualization
+            </h3>
+
+            <p>
+                Displays sentiment results using charts
+                and statistics.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- FOOTER -->
+
+<footer>
+
+    <div class="footer-logo">
+        SentimentAI
+    </div>
+
+    <p>
+        Live Sentiment Analysis using Python & NLP
+    </p>
+
+    <span>
+        © 2026 SentimentAI Project
+    </span>
+
+</footer>
+
+
+<script>
+
+/* =====================================================
+   QUICK SEARCH
+===================================================== */
+
+function searchTopic(topic) {
+
+    const input =
+        document.querySelector(
+            'input[name="keyword"]'
+        );
+
+    if (!input) return;
+
+    input.value = topic;
+
+    input
+        .closest("form")
+        .submit();
+
+}
+
+
+/* =====================================================
+   CHART
+===================================================== */
+
+const positive =
+    Number("{{ positive or 0 }}");
+
+const neutral =
+    Number("{{ neutral or 0 }}");
+
+const negative =
+    Number("{{ negative or 0 }}");
+
+
+const chartElement =
+    document.getElementById(
+        "sentimentChart"
+    );
+
+
+if (chartElement) {
+
+    const sentimentChart =
+        new Chart(
+            chartElement.getContext("2d"),
+            {
+
+                type: "doughnut",
+
+                data: {
+
+                    labels: [
+                        "Positive",
+                        "Neutral",
+                        "Negative"
+                    ],
+
+                    datasets: [{
+
+                        data: [
+                            positive,
+                            neutral,
+                            negative
+                        ],
+
+                        borderWidth: 0
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    cutout: "70%",
+
+                    plugins: {
+
+                        legend: {
+
+                            position: "bottom",
+
+                            labels: {
+
+                                padding: 20
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
+
+    /* =================================================
+       LIVE UPDATE
+    ================================================= */
+
+    const currentKeyword =
+        "{{ keyword or '' }}";
+
+
+    async function liveUpdate() {
+
+        if (!currentKeyword) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/analyze?keyword=" +
+                    encodeURIComponent(
+                        currentKeyword
+                    )
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Server returned " +
+                    response.status
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            console.log(
+                "Live update:",
+                data
+            );
+
+
+            /* Update numbers */
+
+            document.getElementById(
+                "positiveValue"
+            ).textContent =
+                data.positive + "%";
+
+
+            document.getElementById(
+                "neutralValue"
+            ).textContent =
+                data.neutral + "%";
+
+
+            document.getElementById(
+                "negativeValue"
+            ).textContent =
+                data.negative + "%";
+
+
+            document.getElementById(
+                "totalValue"
+            ).textContent =
+                data.total;
+
+
+            /* Update answer */
+
+            document.getElementById(
+                "answerText"
+            ).textContent =
+                data.answer;
+
+
+            /* Update chart */
+
+            sentimentChart.data.datasets[0].data = [
+
+                data.positive,
+
+                data.neutral,
+
+                data.negative
+
+            ];
+
+            sentimentChart.update();
+
+
+            /* Update overall sentiment */
+
+            let sentiment = "Neutral";
+
+            let emoji = "😐";
+
+
+            if (
+                data.positive >= data.neutral &&
+                data.positive >= data.negative
+            ) {
+
+                sentiment = "Positive";
+
+                emoji = "😊";
+
+            }
+
+            else if (
+                data.negative >= data.neutral &&
+                data.negative >= data.positive
+            ) {
+
+                sentiment = "Negative";
+
+                emoji = "😠";
+
+            }
+
+
+            document.getElementById(
+                "overallSentiment"
+            ).innerHTML =
+
+                '<span class="big-emoji">' +
+                emoji +
+                '</span>' +
+
+                '<span>' +
+                sentiment +
+                '</span>';
+
+
+            document.getElementById(
+                "statusText"
+            ).textContent =
+                "Live";
+
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Live update error:",
+                error
+            );
+
+            document.getElementById(
+                "statusText"
+            ).textContent =
+                "Offline";
+
+        }
+
+    }
+
+
+    /*
+       Update every 60 seconds
+    */
+
+    setInterval(
+        liveUpdate,
+        60000
+    );
+
+}
+
+</script>
+
+
+</body>
+
+</html> 
