@@ -1,4 +1,3 @@
- 
 from flask import Flask, render_template, request, jsonify
 import requests
 import feedparser
@@ -10,7 +9,7 @@ from urllib.parse import quote
 # FLASK CONFIGURATION
 # =========================================================
 
-# index.html and index.css are in the same folder as python.py
+# index.html and index.css are in the SAME folder as app.py
 app = Flask(
     __name__,
     template_folder=".",
@@ -105,11 +104,13 @@ def search_live(keyword):
     )
 
     headers = {
-        "User-Agent":
-        "Mozilla/5.0 "
-        "(Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 "
-        "Chrome/131.0 Safari/537.36"
+        "User-Agent": (
+            "Mozilla/5.0 "
+            "(Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 "
+            "(KHTML, like Gecko) "
+            "Chrome/131.0 Safari/537.36"
+        )
     }
 
     try:
@@ -140,7 +141,7 @@ def search_live(keyword):
                 ""
             )
 
-            # Remove HTML from description
+            # Remove HTML
             description = re.sub(
                 r"<[^>]+>",
                 " ",
@@ -221,20 +222,20 @@ def calculate_results(posts):
 
     positive_count = sum(
         1
-        for p in posts
-        if p["sentiment"] == "positive"
+        for post in posts
+        if post["sentiment"] == "positive"
     )
 
     neutral_count = sum(
         1
-        for p in posts
-        if p["sentiment"] == "neutral"
+        for post in posts
+        if post["sentiment"] == "neutral"
     )
 
     negative_count = sum(
         1
-        for p in posts
-        if p["sentiment"] == "negative"
+        for post in posts
+        if post["sentiment"] == "negative"
     )
 
     positive = round(
@@ -245,7 +246,6 @@ def calculate_results(posts):
         neutral_count / total * 100
     )
 
-    # Make sure percentages always equal 100
     negative = 100 - positive - neutral
 
     return (
@@ -454,13 +454,13 @@ def api_analyze():
 
 
 # =========================================================
-# RUN
+# LOCAL DEVELOPMENT
 # =========================================================
 
 if __name__ == "__main__":
 
     app.run(
         debug=True,
-        host="127.0.0.1",
+        host="0.0.0.0",
         port=5000
-    ) 
+    )
