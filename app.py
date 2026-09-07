@@ -2,18 +2,21 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import feedparser
 import re
+import os
+import json
 from urllib.parse import quote
+
+
+# =========================================================
+# FLASK CONFIGURATION
+# =========================================================
 
 app = Flask(
     __name__,
     template_folder=".",
-    static_folder="."
+    static_folder=".",
+    static_url_path=""
 )
-
-
-@app.route("/index.css")
-def serve_css():
-    return app.send_static_file("index.css")
 
 
 # =========================================================
@@ -29,7 +32,9 @@ POSITIVE_WORDS = {
     "impressive", "cool", "nice", "fun", "better",
     "brilliant", "useful", "interesting", "excited",
     "exciting", "win", "winning", "favorite",
-    "improve", "improved", "growth", "benefit"
+    "improve", "improved", "growth", "benefit",
+    "innovative", "innovation", "progress", "secure",
+    "strong", "effective", "efficient", "powerful"
 }
 
 NEGATIVE_WORDS = {
@@ -43,9 +48,15 @@ NEGATIVE_WORDS = {
     "scam", "fake", "wrong", "bug", "bugs",
     "toxic", "frustrating", "frustrated",
     "risk", "danger", "dangerous", "loss",
-    "decline", "crisis", "concern"
+    "decline", "crisis", "concern", "attack",
+    "threat", "error", "errors", "weak",
+    "failure", "controversy", "controversial"
 }
 
+
+# =========================================================
+# SENTIMENT ANALYSIS
+# =========================================================
 
 def analyze_sentiment(text):
 
@@ -80,6 +91,10 @@ def analyze_sentiment(text):
 
     return sentiment, score
 
+
+# =========================================================
+# LIVE SEARCH
+# =========================================================
 
 def search_live(keyword):
 
@@ -119,9 +134,12 @@ def search_live(keyword):
 
         results = []
 
-        for entry in feed.entries[:20]:
+        for entry in feed.entries[:50]:
 
-            title = entry.get("title", "")
+            title = entry.get(
+                "title",
+                ""
+            )
 
             description = entry.get(
                 "description",
@@ -134,9 +152,15 @@ def search_live(keyword):
                 description
             )
 
-            text = title + " " + description
+            text = (
+                title +
+                " " +
+                description
+            )
 
-            sentiment, score = analyze_sentiment(text)
+            sentiment, score = analyze_sentiment(
+                text
+            )
 
             published = entry.get(
                 "published",
@@ -151,6 +175,7 @@ def search_live(keyword):
             source_name = ""
 
             if hasattr(source, "get"):
+
                 source_name = source.get(
                     "title",
                     ""
@@ -160,25 +185,39 @@ def search_live(keyword):
                 source_name = "News"
 
             results.append({
+
                 "user": source_name,
+
                 "time": published,
+
                 "text": title,
+
                 "sentiment": sentiment,
+
                 "score": score,
+
                 "link": entry.get(
                     "link",
                     "#"
                 )
+
             })
 
         return results, None
 
     except Exception as error:
 
-        print("Search error:", error)
+        print(
+            "Search error:",
+            error
+        )
 
         return [], str(error)
 
+
+# =========================================================
+# CALCULATE RESULTS
+# =========================================================
 
 def calculate_results(posts):
 
@@ -188,17 +227,20 @@ def calculate_results(posts):
         return 0, 0, 0, 0
 
     positive_count = sum(
-        1 for post in posts
+        1
+        for post in posts
         if post["sentiment"] == "positive"
     )
 
     neutral_count = sum(
-        1 for post in posts
+        1
+        for post in posts
         if post["sentiment"] == "neutral"
     )
 
     negative_count = sum(
-        1 for post in posts
+        1
+        for post in posts
         if post["sentiment"] == "negative"
     )
 
@@ -212,8 +254,17 @@ def calculate_results(posts):
 
     negative = 100 - positive - neutral
 
-    return positive, neutral, negative, total
+    return (
+        positive,
+        neutral,
+        negative,
+        total
+    )
 
+
+# =========================================================
+# GENERATE ANSWER
+# =========================================================
 
 def generate_answer(
     keyword,
@@ -224,6 +275,7 @@ def generate_answer(
 ):
 
     if total == 0:
+
         return (
             f"No recent results were found "
             f"for '{keyword}'. "
@@ -231,12 +283,15 @@ def generate_answer(
         )
 
     if positive >= negative and positive >= neutral:
+
         overall = "Positive"
 
     elif negative >= positive and negative >= neutral:
+
         overall = "Negative"
 
     else:
+
         overall = "Neutral"
 
     return (
@@ -249,12 +304,52 @@ def generate_answer(
     )
 
 
+# =========================================================
+# BDA RESULTS
+# =========================================================
+
+def load_bda_results():
+
+    file_path = os.path.join(
+        os.path.dirname(__file__),
+        "bda_results.json"
+    )
+
+    if not os.path.exists(file_path):
+        return None
+
+    try:
+
+        with open(
+            file_path,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            return json.load(file)
+
+    except Exception as error:
+
+        print(
+            "BDA result loading error:",
+            error
+        )
+
+        return None
+
+
+# =========================================================
+# HOME
+# =========================================================
+
 @app.route("/")
 def home():
 
     keyword = "artificial intelligence"
 
-    posts, error = search_live(keyword)
+    posts, error = search_live(
+        keyword
+    )
 
     positive, neutral, negative, total = \
         calculate_results(posts)
@@ -267,20 +362,39 @@ def home():
         total
     )
 
+    bda_data = load_bda_results()
+
     return render_template(
         "index.html",
+
         keyword=keyword,
+
         posts=posts,
+
         positive=positive,
+
         neutral=neutral,
+
         negative=negative,
+
         total=total,
+
         answer=answer,
-        error=error
+
+        error=error,
+
+        bda_data=bda_data
     )
 
 
-@app.route("/analyze", methods=["POST"])
+# =========================================================
+# SEARCH
+# =========================================================
+
+@app.route(
+    "/analyze",
+    methods=["POST"]
+)
 def analyze():
 
     keyword = request.form.get(
@@ -291,7 +405,14 @@ def analyze():
     if not keyword:
         keyword = "artificial intelligence"
 
-    posts, error = search_live(keyword)
+    print(
+        "Searching:",
+        keyword
+    )
+
+    posts, error = search_live(
+        keyword
+    )
 
     positive, neutral, negative, total = \
         calculate_results(posts)
@@ -306,16 +427,30 @@ def analyze():
 
     return render_template(
         "index.html",
+
         keyword=keyword,
+
         posts=posts,
+
         positive=positive,
+
         neutral=neutral,
+
         negative=negative,
+
         total=total,
+
         answer=answer,
-        error=error
+
+        error=error,
+
+        bda_data=load_bda_results()
     )
 
+
+# =========================================================
+# LIVE JSON API
+# =========================================================
 
 @app.route("/api/analyze")
 def api_analyze():
@@ -328,7 +463,9 @@ def api_analyze():
     if not keyword:
         keyword = "artificial intelligence"
 
-    posts, error = search_live(keyword)
+    posts, error = search_live(
+        keyword
+    )
 
     positive, neutral, negative, total = \
         calculate_results(posts)
@@ -342,16 +479,60 @@ def api_analyze():
     )
 
     return jsonify({
+
         "keyword": keyword,
+
         "positive": positive,
+
         "neutral": neutral,
+
         "negative": negative,
+
         "total": total,
+
         "answer": answer,
+
         "posts": posts,
+
         "error": error
+
     })
 
+
+# =========================================================
+# BDA API
+# =========================================================
+
+@app.route("/api/bda")
+def api_bda():
+
+    data = load_bda_results()
+
+    if data is None:
+
+        return jsonify({
+
+            "available": False,
+
+            "message": (
+                "BDA results are not available. "
+                "Run the Hadoop MapReduce job first."
+            )
+
+        })
+
+    return jsonify({
+
+        "available": True,
+
+        "data": data
+
+    })
+
+
+# =========================================================
+# LOCAL DEVELOPMENT
+# =========================================================
 
 if __name__ == "__main__":
 

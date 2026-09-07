@@ -40,21 +40,25 @@
 
     </div>
 
-    <nav>
+<nav>
 
-        <a href="#dashboard">
-            Dashboard
-        </a>
+    <a href="#dashboard">
+        Dashboard
+    </a>
 
-        <a href="#analysis">
-            Analysis
-        </a>
+    <a href="#analysis">
+        Analysis
+    </a>
 
-        <a href="#about">
-            About
-        </a>
+    <a href="#bda">
+        BDA
+    </a>
 
-    </nav>
+    <a href="#about">
+        About
+    </a>
+
+</nav>
 
 </header>
 
@@ -684,7 +688,230 @@
     </div>
 
 </section>
+<!-- BDA SECTION -->
 
+<section class="technology" id="bda">
+
+    <div class="section-heading center">
+
+        <p class="small-title">
+            BIG DATA ANALYTICS
+        </p>
+
+        <h2>
+            Hadoop Analytics
+        </h2>
+
+        <p>
+            Large-scale sentiment data is processed using
+            Hadoop HDFS and MapReduce.
+        </p>
+
+    </div>
+
+
+    <div class="stats">
+
+        <div class="stat-card total">
+
+            <div class="stat-top">
+
+                <span class="stat-icon">
+                    🗄️
+                </span>
+
+                <span>
+                    BDA Records
+                </span>
+
+            </div>
+
+            <h3 id="bdaTotal">
+                {% if bda_data %}
+                    {{ bda_data.total }}
+                {% else %}
+                    0
+                {% endif %}
+            </h3>
+
+            <p>
+                Records processed
+            </p>
+
+        </div>
+
+
+        <div class="stat-card positive">
+
+            <div class="stat-top">
+
+                <span class="stat-icon">
+                    🟢
+                </span>
+
+                <span>
+                    BDA Positive
+                </span>
+
+            </div>
+
+            <h3 id="bdaPositive">
+
+                {% if bda_data %}
+                    {{ bda_data.positive }}%
+                {% else %}
+                    0%
+                {% endif %}
+
+            </h3>
+
+            <p>
+                Hadoop result
+            </p>
+
+        </div>
+
+
+        <div class="stat-card neutral">
+
+            <div class="stat-top">
+
+                <span class="stat-icon">
+                    🟡
+                </span>
+
+                <span>
+                    BDA Neutral
+                </span>
+
+            </div>
+
+            <h3 id="bdaNeutral">
+
+                {% if bda_data %}
+                    {{ bda_data.neutral }}%
+                {% else %}
+                    0%
+                {% endif %}
+
+            </h3>
+
+            <p>
+                Hadoop result
+            </p>
+
+        </div>
+
+
+        <div class="stat-card negative">
+
+            <div class="stat-top">
+
+                <span class="stat-icon">
+                    🔴
+                </span>
+
+                <span>
+                    BDA Negative
+                </span>
+
+            </div>
+
+            <h3 id="bdaNegative">
+
+                {% if bda_data %}
+                    {{ bda_data.negative }}%
+                {% else %}
+                    0%
+                {% endif %}
+
+            </h3>
+
+            <p>
+                Hadoop result
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="tech-grid">
+
+        <div class="tech-card">
+
+            <div>
+                🗄️
+            </div>
+
+            <h3>
+                HDFS
+            </h3>
+
+            <p>
+                Distributed storage for large volumes
+                of sentiment data.
+            </p>
+
+        </div>
+
+
+        <div class="tech-card">
+
+            <div>
+                ⚙️
+            </div>
+
+            <h3>
+                MapReduce
+            </h3>
+
+            <p>
+                Distributed processing and aggregation
+                of sentiment records.
+            </p>
+
+        </div>
+
+
+        <div class="tech-card">
+
+            <div>
+                📊
+            </div>
+
+            <h3>
+                Data Aggregation
+            </h3>
+
+            <p>
+                Combines sentiment counts from
+                multiple data records.
+            </p>
+
+        </div>
+
+
+        <div class="tech-card">
+
+            <div>
+                🚀
+            </div>
+
+            <h3>
+                Scalable Analytics
+            </h3>
+
+            <p>
+                Designed to process larger datasets
+                using distributed computing.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
 
 <!-- FOOTER -->
 
