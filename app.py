@@ -1,6 +1,5 @@
  
-from flask import Flask, render_template, request, jsonify
-
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import requests
 import feedparser
 import re
@@ -17,8 +16,7 @@ from sentiment_model import analyze_sentiment
 
 app = Flask(
     __name__,
-    template_folder=".",
-    static_folder="."
+    template_folder="."
 )
 
 
@@ -413,6 +411,9 @@ def dashboard_response(
 
     )
 
+@app.route("/index.css")
+def serve_css():
+    return send_from_directory(".", "index.css")
 
 # =========================================================
 # HOME
