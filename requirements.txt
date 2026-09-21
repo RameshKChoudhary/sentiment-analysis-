@@ -1,6 +1,4 @@
 Flask
 requests
 feedparser
-transformers
-torch
-sentencepiece
+vaderSentiment

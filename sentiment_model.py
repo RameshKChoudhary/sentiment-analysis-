@@ -1,297 +1,189 @@
- 
-from transformers import pipeline
 import re
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 # =========================================================
-# AI SENTIMENT MODEL
+# VADER SENTIMENT ANALYZER
 # =========================================================
 
-MODEL_NAME = (
-    "cardiffnlp/twitter-roberta-base-sentiment-latest"
-)
-
-
-classifier = pipeline(
-    "sentiment-analysis",
-    model=MODEL_NAME,
-    tokenizer=MODEL_NAME
-)
+analyzer = SentimentIntensityAnalyzer()
 
 
 # =========================================================
-# STRONG NEGATIVE TOPICS
+# CONTEXT PHRASES
 # =========================================================
 
-NEGATIVE_TOPIC_PHRASES = {
-
-    # Terrorism / violence
-    "terrorism": 3.5,
+NEGATIVE_CONTEXT = {
+    "terrorism": 3.0,
     "terrorist attack": 4.0,
     "terrorist attacks": 4.0,
-    "terrorist": 2.5,
-    "terror attack": 4.0,
-    "terror attacks": 4.0,
-
-    # War / conflict
-    "war": 3.0,
+    "war": 2.5,
     "armed conflict": 3.0,
-    "military conflict": 2.8,
-    "invasion": 3.5,
-    "airstrike": 3.5,
-    "air strikes": 3.5,
+    "invasion": 3.0,
+    "airstrike": 3.0,
     "missile attack": 3.5,
     "bomb attack": 4.0,
-
-    # Violence
     "violent attack": 3.5,
-    "violence": 2.8,
     "mass shooting": 4.0,
     "shooting": 3.0,
     "murder": 3.5,
-    "murdered": 3.5,
-    "killed": 2.8,
-    "killing": 3.0,
-    "death": 2.2,
-    "deaths": 2.8,
-
-    # Disaster
+    "killed": 3.0,
+    "death": 2.5,
     "natural disaster": 3.0,
-    "earthquake": 2.8,
+    "earthquake": 2.5,
     "flood": 2.5,
-    "flooding": 2.5,
     "cyclone": 2.5,
-    "storm": 2.0,
     "disaster": 3.0,
-
-    # Crime
     "crime": 2.5,
-    "criminal": 2.2,
-    "fraud": 3.0,
-    "scam": 3.0,
-    "corruption": 2.8,
+    "fraud": 2.5,
+    "scam": 2.5,
+    "corruption": 2.0,
     "kidnapping": 3.5,
-
-    # Serious negative situations
-    "crisis": 2.5,
+    "crisis": 2.0,
     "economic crisis": 3.0,
-    "health crisis": 2.8,
-    "humanitarian crisis": 3.5,
-    "tragedy": 3.5,
-    "tragedy strikes": 3.5,
+    "health crisis": 2.5,
+    "humanitarian crisis": 3.0,
+    "tragedy": 3.0,
     "catastrophe": 3.5,
-
-    # Negative events
-    "attack": 2.2,
+    "attack": 2.5,
     "threat": 2.0,
     "explosion": 3.0,
-    "injured": 2.2,
-    "injuries": 2.2,
-    "victims": 2.0,
+    "injured": 2.5,
+    "injuries": 2.5,
+    "victims": 2.5,
     "casualties": 3.0,
-    "loss": 1.8,
+    "loss": 1.5,
     "collapse": 2.5,
-    "decline": 1.8,
-    "unemployment": 2.2
-
+    "decline": 1.5,
+    "unemployment": 2.0,
+    "violence": 3.0,
+    "dead": 3.0,
 }
 
 
-# =========================================================
-# STRONG POSITIVE TOPICS
-# =========================================================
-
-POSITIVE_TOPIC_PHRASES = {
-
-    # Freedom / independence
+POSITIVE_CONTEXT = {
     "indian freedom": 4.0,
-    "freedom struggle": 4.0,
-    "freedom fighters": 4.0,
-    "freedom fighter": 4.0,
+    "freedom struggle": 3.5,
+    "freedom fighters": 3.5,
     "independence day": 4.0,
     "indian independence": 4.0,
     "independence celebration": 4.0,
     "independence celebrations": 4.0,
-
-    # Celebration
     "celebration": 2.5,
     "celebrations": 2.5,
     "celebrates": 2.5,
     "celebrating": 2.5,
-    "celebrated": 2.5,
     "festival": 2.0,
     "festive": 2.0,
-
-    # Success
     "success": 2.5,
     "successful": 2.5,
     "achievement": 3.0,
     "achievements": 3.0,
     "historic achievement": 3.5,
-    "major achievement": 3.2,
+    "major achievement": 3.5,
     "breakthrough": 3.0,
     "victory": 3.0,
     "won": 2.5,
     "winning": 2.5,
-
-    # Growth / development
     "economic growth": 3.0,
-    "growth": 2.0,
-    "development": 2.0,
-    "progress": 2.5,
-    "innovation": 2.5,
-    "innovative": 2.5,
+    "growth": 1.5,
+    "development": 1.5,
+    "progress": 2.0,
+    "innovation": 2.0,
+    "innovative": 2.0,
     "record growth": 3.0,
-    "strong growth": 3.0,
-
-    # Positive events
+    "strong growth": 2.5,
     "good news": 3.0,
     "great news": 3.0,
     "positive news": 3.0,
     "happy": 2.0,
     "happiness": 2.0,
-    "hope": 1.8,
+    "hope": 1.5,
     "hopeful": 2.0,
     "peace": 2.5,
     "peaceful": 2.5,
     "unity": 2.5,
-    "proud": 2.5,
-    "pride": 2.5,
-
-    # Improvement
+    "proud": 2.0,
+    "pride": 2.0,
     "improvement": 2.0,
     "improved": 2.0,
     "improving": 2.0,
-    "benefit": 1.8,
-    "benefits": 1.8,
-    "better": 1.8,
-    "recovery": 2.2,
-    "recovering": 2.2
-
+    "benefit": 1.5,
+    "benefits": 1.5,
+    "better": 1.5,
+    "recovery": 2.0,
+    "recovering": 2.0,
 }
 
 
-# =========================================================
-# GENERAL POSITIVE / NEGATIVE WORDS
-# =========================================================
-
 POSITIVE_WORDS = {
-    "good",
-    "great",
-    "excellent",
-    "amazing",
-    "awesome",
-    "love",
-    "best",
-    "happy",
-    "beautiful",
-    "fantastic",
-    "wonderful",
     "success",
     "successful",
-    "helpful",
-    "perfect",
-    "positive",
-    "impressive",
-    "nice",
-    "brilliant",
-    "useful",
-    "excited",
-    "exciting",
-    "win",
-    "winning",
-    "favorite",
-    "improve",
-    "improved",
-    "growth",
-    "benefit",
-    "innovative",
-    "innovation",
-    "progress",
-    "secure",
-    "strong",
-    "effective",
-    "efficient",
-    "powerful",
-    "peace",
-    "hope",
-    "proud",
-    "celebrate",
-    "celebration",
     "achievement",
+    "achieved",
     "victory",
-    "success"
+    "growth",
+    "progress",
+    "improvement",
+    "improved",
+    "innovation",
+    "breakthrough",
+    "win",
+    "won",
+    "winning",
+    "celebration",
+    "celebrate",
+    "happy",
+    "hope",
+    "peace",
+    "unity",
+    "proud",
+    "benefit",
+    "benefits",
+    "better",
+    "strong",
+    "great",
+    "excellent",
+    "positive",
+    "recovery",
 }
 
 
 NEGATIVE_WORDS = {
-    "bad",
-    "worst",
-    "hate",
-    "poor",
-    "terrible",
-    "awful",
-    "horrible",
-    "sad",
-    "angry",
-    "slow",
-    "difficult",
-    "problem",
-    "problems",
-    "fail",
-    "failed",
-    "failure",
-    "negative",
-    "disappointed",
-    "disappointing",
-    "boring",
-    "issue",
-    "issues",
-    "expensive",
-    "worse",
-    "useless",
-    "broken",
-    "annoying",
-    "scam",
-    "fake",
-    "wrong",
-    "bug",
-    "bugs",
-    "toxic",
-    "frustrating",
-    "frustrated",
-    "risk",
-    "danger",
-    "dangerous",
-    "loss",
-    "decline",
-    "crisis",
-    "concern",
     "attack",
-    "threat",
-    "error",
-    "errors",
-    "weak",
-    "controversy",
-    "war",
-    "violence",
     "terrorism",
     "terrorist",
+    "war",
+    "violence",
+    "violent",
     "murder",
     "killed",
     "killing",
     "death",
-    "deaths",
-    "disaster",
+    "dead",
     "crime",
-    "fraud",
-    "corruption",
+    "criminal",
+    "disaster",
+    "earthquake",
+    "flood",
+    "cyclone",
+    "explosion",
+    "injured",
+    "injury",
     "victim",
     "victims",
-    "injured",
-    "injuries",
     "casualties",
-    "explosion"
+    "crisis",
+    "threat",
+    "danger",
+    "collapse",
+    "decline",
+    "loss",
+    "fraud",
+    "scam",
+    "corruption",
+    "violence",
+    "unemployment",
 }
 
 
@@ -300,7 +192,6 @@ NEGATIVE_WORDS = {
 # =========================================================
 
 def normalize_text(text):
-
     if not text:
         return ""
 
@@ -313,7 +204,7 @@ def normalize_text(text):
     )
 
     text = re.sub(
-        r"[^a-zA-Z0-9\s'-]",
+        r"[^a-z0-9\s'-]",
         " ",
         text
     )
@@ -328,111 +219,59 @@ def normalize_text(text):
 
 
 # =========================================================
-# FIND PHRASE SCORE
+# CONTEXT SCORE
 # =========================================================
 
-def calculate_context_score(
-    text,
-    topic=""
-):
+def calculate_context_score(text, topic=""):
 
-    text = normalize_text(text)
+    combined_text = normalize_text(
+        f"{topic} {text}"
+    )
 
-    topic = normalize_text(topic)
+    topic_text = normalize_text(topic)
 
     positive_score = 0.0
     negative_score = 0.0
 
     # -----------------------------------------------------
-    # Topic-level positive signals
+    # Strong topic-level context
     # -----------------------------------------------------
 
-    for phrase, weight in POSITIVE_TOPIC_PHRASES.items():
+    for phrase, weight in NEGATIVE_CONTEXT.items():
 
-        if phrase in topic:
-
-            positive_score += weight
-
-        elif phrase in text:
-
-            positive_score += (
-                weight * 0.65
-            )
-
-    # -----------------------------------------------------
-    # Topic-level negative signals
-    # -----------------------------------------------------
-
-    for phrase, weight in NEGATIVE_TOPIC_PHRASES.items():
-
-        if phrase in topic:
-
+        if phrase in topic_text:
             negative_score += weight
 
-        elif phrase in text:
+        elif phrase in combined_text:
+            negative_score += weight * 0.65
 
-            negative_score += (
-                weight * 0.65
-            )
+    for phrase, weight in POSITIVE_CONTEXT.items():
+
+        if phrase in topic_text:
+            positive_score += weight
+
+        elif phrase in combined_text:
+            positive_score += weight * 0.65
 
     # -----------------------------------------------------
-    # General words
+    # General word context
     # -----------------------------------------------------
 
-    words = re.findall(
-        r"\b[a-zA-Z]+\b",
-        text
+    words = set(
+        combined_text.split()
     )
 
-    for word in words:
-
-        if word in POSITIVE_WORDS:
-
-            positive_score += 0.35
-
-        if word in NEGATIVE_WORDS:
-
-            negative_score += 0.45
-
-    return (
-        positive_score,
-        negative_score
+    positive_score += (
+        len(words.intersection(POSITIVE_WORDS))
+        * 0.35
     )
 
+    negative_score += (
+        len(words.intersection(NEGATIVE_WORDS))
+        * 0.45
+    )
 
-# =========================================================
-# NORMALIZE MODEL LABEL
-# =========================================================
-
-def normalize_model_label(label):
-
-    label = str(label).lower().strip()
-
-    if label in {
-        "negative",
-        "neg",
-        "label_0"
-    }:
-
-        return "negative"
-
-    if label in {
-        "neutral",
-        "neu",
-        "label_1"
-    }:
-
-        return "neutral"
-
-    if label in {
-        "positive",
-        "pos",
-        "label_2"
-    }:
-
-        return "positive"
-
-    return "neutral"
+    return positive_score, negative_score
 
 
 # =========================================================
@@ -444,69 +283,32 @@ def analyze_sentiment(
     topic=""
 ):
 
-    if not text or not text.strip():
+    if not text:
 
         return {
             "sentiment": "neutral",
-            "score": 0.0
+            "score": 0.0,
+            "positive": 0.0,
+            "neutral": 1.0,
+            "negative": 0.0,
         }
+
+    text = str(text)[:5000]
 
     try:
 
         # -------------------------------------------------
-        # Limit text length
+        # VADER
         # -------------------------------------------------
 
-        text = text[:3000]
+        vader = analyzer.polarity_scores(text)
+
+        vader_positive = vader["pos"]
+        vader_negative = vader["neg"]
+        vader_neutral = vader["neu"]
 
         # -------------------------------------------------
-        # Get ALL model probabilities
-        # -------------------------------------------------
-
-        model_results = classifier(
-            text,
-            truncation=True,
-            top_k=None
-        )
-
-        # Some transformers versions return:
-        # [[...]]
-        # while others return:
-        # [...]
-        if (
-            isinstance(model_results, list)
-            and len(model_results) > 0
-            and isinstance(model_results[0], list)
-        ):
-
-            model_results = model_results[0]
-
-        probabilities = {
-
-            "positive": 0.0,
-
-            "neutral": 0.0,
-
-            "negative": 0.0
-
-        }
-
-        for result in model_results:
-
-            label = normalize_model_label(
-                result.get("label", "")
-            )
-
-            score = float(
-                result.get("score", 0.0)
-            )
-
-            if label in probabilities:
-
-                probabilities[label] = score
-
-        # -------------------------------------------------
-        # Contextual score
+        # Context
         # -------------------------------------------------
 
         positive_context, negative_context = \
@@ -515,186 +317,145 @@ def analyze_sentiment(
                 topic
             )
 
-        # -------------------------------------------------
-        # Convert contextual evidence into
-        # a bounded adjustment.
-        # -------------------------------------------------
-
         context_total = (
-            positive_context +
-            negative_context
+            positive_context
+            + negative_context
         )
 
         if context_total > 0:
 
-            positive_context_ratio = (
-                positive_context /
-                context_total
+            context_positive = (
+                positive_context
+                / context_total
             )
 
-            negative_context_ratio = (
-                negative_context /
-                context_total
+            context_negative = (
+                negative_context
+                / context_total
+            )
+
+            context_neutral = 0.0
+
+        else:
+
+            context_positive = 0.0
+            context_negative = 0.0
+            context_neutral = 1.0
+
+        # -------------------------------------------------
+        # Blend VADER + Context
+        # -------------------------------------------------
+
+        if context_total > 0:
+
+            positive = (
+                vader_positive * 0.70
+                + context_positive * 0.30
+            )
+
+            negative = (
+                vader_negative * 0.70
+                + context_negative * 0.30
+            )
+
+            neutral = (
+                vader_neutral * 0.70
+                + context_neutral * 0.30
             )
 
         else:
 
-            positive_context_ratio = 0.0
-            negative_context_ratio = 0.0
+            positive = vader_positive
+            negative = vader_negative
+            neutral = vader_neutral
 
         # -------------------------------------------------
-        # Start with model probabilities.
-        #
-        # The model remains the main signal.
-        # Context is used to correct topic-level
-        # situations where the model often predicts
-        # neutral for factual news.
+        # Strong topic adjustment
         # -------------------------------------------------
 
-        positive_probability = (
-            probabilities["positive"] * 0.70
-            +
-            positive_context_ratio * 0.30
-        )
+        if negative_context >= 2.0 and \
+           negative_context > positive_context:
 
-        negative_probability = (
-            probabilities["negative"] * 0.70
-            +
-            negative_context_ratio * 0.30
-        )
+            negative += 0.20
+            neutral *= 0.55
 
-        neutral_probability = (
-            probabilities["neutral"] * 0.70
-        )
+        elif positive_context >= 2.0 and \
+             positive_context > negative_context:
 
-        # -------------------------------------------------
-        # Strong contextual topics
-        #
-        # This prevents topics such as terrorism,
-        # war, attacks, freedom celebrations, etc.
-        # from becoming overwhelmingly neutral.
-        # -------------------------------------------------
-
-        strong_negative = (
-            negative_context >= 2.0
-            and negative_context > positive_context
-        )
-
-        strong_positive = (
-            positive_context >= 2.0
-            and positive_context > negative_context
-        )
-
-        if strong_negative:
-
-            negative_probability += 0.20
-
-            neutral_probability *= 0.55
-
-        elif strong_positive:
-
-            positive_probability += 0.20
-
-            neutral_probability *= 0.55
+            positive += 0.20
+            neutral *= 0.55
 
         # -------------------------------------------------
         # Normalize
         # -------------------------------------------------
 
-        total_probability = (
-            positive_probability +
-            neutral_probability +
-            negative_probability
+        total = (
+            positive
+            + neutral
+            + negative
         )
 
-        if total_probability <= 0:
+        if total <= 0:
 
-            return {
-                "sentiment": "neutral",
-                "score": 0.0
-            }
+            positive = 0.0
+            neutral = 1.0
+            negative = 0.0
 
-        positive_probability /= total_probability
-        neutral_probability /= total_probability
-        negative_probability /= total_probability
+        else:
+
+            positive /= total
+            neutral /= total
+            negative /= total
 
         # -------------------------------------------------
-        # Determine final sentiment
+        # Final sentiment
         # -------------------------------------------------
 
-        probabilities_final = {
-
-            "positive":
-                positive_probability,
-
-            "neutral":
-                neutral_probability,
-
-            "negative":
-                negative_probability
-
+        probabilities = {
+            "positive": positive,
+            "neutral": neutral,
+            "negative": negative,
         }
 
         sentiment = max(
-            probabilities_final,
-            key=probabilities_final.get
+            probabilities,
+            key=probabilities.get
         )
 
-        confidence = probabilities_final[
+        score = probabilities[
             sentiment
         ]
-
-        # -------------------------------------------------
-        # Extra protection against weak neutral
-        # classifications when strong context exists.
-        # -------------------------------------------------
-
-        if strong_negative:
-
-            if negative_probability >= 0.42:
-
-                sentiment = "negative"
-
-                confidence = negative_probability
-
-        elif strong_positive:
-
-            if positive_probability >= 0.42:
-
-                sentiment = "positive"
-
-                confidence = positive_probability
 
         return {
 
             "sentiment": sentiment,
 
             "score": round(
-                float(confidence),
+                score,
                 4
             ),
 
-            "positive_probability": round(
-                positive_probability,
+            "positive": round(
+                positive,
                 4
             ),
 
-            "neutral_probability": round(
-                neutral_probability,
+            "neutral": round(
+                neutral,
                 4
             ),
 
-            "negative_probability": round(
-                negative_probability,
+            "negative": round(
+                negative,
                 4
-            )
+            ),
 
         }
 
     except Exception as error:
 
         print(
-            "Sentiment model error:",
+            "Sentiment error:",
             error
         )
 
@@ -704,10 +465,10 @@ def analyze_sentiment(
 
             "score": 0.0,
 
-            "positive_probability": 0.0,
+            "positive": 0.0,
 
-            "neutral_probability": 1.0,
+            "neutral": 1.0,
 
-            "negative_probability": 0.0
+            "negative": 0.0,
 
-        } 
+        }
