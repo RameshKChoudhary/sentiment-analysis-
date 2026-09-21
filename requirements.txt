@@ -1,4 +1,6 @@
 Flask
 requests
 feedparser
-gunicorn
+transformers
+torch
+sentencepiece

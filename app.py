@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, jsonify
+
 import requests
 import feedparser
 import re
-import os
-import json
+
 from urllib.parse import quote
+
+from sentiment_model import analyze_sentiment
 
 
 # =========================================================
@@ -20,80 +22,7 @@ app = Flask(
 
 
 # =========================================================
-# SENTIMENT WORDS
-# =========================================================
-
-POSITIVE_WORDS = {
-    "good", "great", "excellent", "amazing", "awesome",
-    "love", "loved", "best", "happy", "beautiful",
-    "fantastic", "wonderful", "success", "successful",
-    "like", "liked", "helpful", "fast", "easy",
-    "perfect", "positive", "enjoy", "enjoyed",
-    "impressive", "cool", "nice", "fun", "better",
-    "brilliant", "useful", "interesting", "excited",
-    "exciting", "win", "winning", "favorite",
-    "improve", "improved", "growth", "benefit",
-    "innovative", "innovation", "progress", "secure",
-    "strong", "effective", "efficient", "powerful"
-}
-
-NEGATIVE_WORDS = {
-    "bad", "worst", "hate", "hated", "poor",
-    "terrible", "awful", "horrible", "sad",
-    "angry", "slow", "difficult", "problem",
-    "problems", "fail", "failed", "failure",
-    "negative", "disappointed", "disappointing",
-    "boring", "issue", "issues", "expensive",
-    "worse", "useless", "broken", "annoying",
-    "scam", "fake", "wrong", "bug", "bugs",
-    "toxic", "frustrating", "frustrated",
-    "risk", "danger", "dangerous", "loss",
-    "decline", "crisis", "concern", "attack",
-    "threat", "error", "errors", "weak",
-    "failure", "controversy", "controversial"
-}
-
-
-# =========================================================
-# SENTIMENT ANALYSIS
-# =========================================================
-
-def analyze_sentiment(text):
-
-    text = text.lower()
-
-    words = re.findall(
-        r"\b[a-zA-Z]+\b",
-        text
-    )
-
-    positive = 0
-    negative = 0
-
-    for word in words:
-
-        if word in POSITIVE_WORDS:
-            positive += 1
-
-        if word in NEGATIVE_WORDS:
-            negative += 1
-
-    score = positive - negative
-
-    if score > 0:
-        sentiment = "positive"
-
-    elif score < 0:
-        sentiment = "negative"
-
-    else:
-        sentiment = "neutral"
-
-    return sentiment, score
-
-
-# =========================================================
-# LIVE SEARCH
+# LIVE NEWS SEARCH
 # =========================================================
 
 def search_live(keyword):
@@ -109,6 +38,7 @@ def search_live(keyword):
     )
 
     headers = {
+
         "User-Agent": (
             "Mozilla/5.0 "
             "(Windows NT 10.0; Win64; x64) "
@@ -116,6 +46,7 @@ def search_live(keyword):
             "(KHTML, like Gecko) "
             "Chrome/131.0 Safari/537.36"
         )
+
     }
 
     try:
@@ -134,7 +65,8 @@ def search_live(keyword):
 
         results = []
 
-        for entry in feed.entries[:50]:
+
+        for entry in feed.entries[:20]:
 
             title = entry.get(
                 "title",
@@ -146,11 +78,17 @@ def search_live(keyword):
                 ""
             )
 
+
+            # Remove HTML from description
+
             description = re.sub(
                 r"<[^>]+>",
                 " ",
                 description
             )
+
+
+            # Combine title + description
 
             text = (
                 title +
@@ -158,14 +96,51 @@ def search_live(keyword):
                 description
             )
 
-            sentiment, score = analyze_sentiment(
+
+            # =================================================
+            # AI SENTIMENT ANALYSIS
+            # =================================================
+
+            sentiment_result = analyze_sentiment(
                 text
             )
+
+            sentiment = sentiment_result[
+                "sentiment"
+            ]
+
+            confidence = sentiment_result[
+                "score"
+            ]
+
+
+            # Convert confidence into
+            # a dashboard-friendly score
+
+            if sentiment == "positive":
+
+                score = round(
+                    confidence * 100,
+                    2
+                )
+
+            elif sentiment == "negative":
+
+                score = round(
+                    -confidence * 100,
+                    2
+                )
+
+            else:
+
+                score = 0
+
 
             published = entry.get(
                 "published",
                 "Recently"
             )
+
 
             source = entry.get(
                 "source",
@@ -174,6 +149,7 @@ def search_live(keyword):
 
             source_name = ""
 
+
             if hasattr(source, "get"):
 
                 source_name = source.get(
@@ -181,8 +157,11 @@ def search_live(keyword):
                     ""
                 )
 
+
             if not source_name:
+
                 source_name = "News"
+
 
             results.append({
 
@@ -196,6 +175,8 @@ def search_live(keyword):
 
                 "score": score,
 
+                "confidence": confidence,
+
                 "link": entry.get(
                     "link",
                     "#"
@@ -203,7 +184,9 @@ def search_live(keyword):
 
             })
 
+
         return results, None
+
 
     except Exception as error:
 
@@ -224,25 +207,42 @@ def calculate_results(posts):
     total = len(posts)
 
     if total == 0:
+
         return 0, 0, 0, 0
 
+
     positive_count = sum(
+
         1
+
         for post in posts
+
         if post["sentiment"] == "positive"
+
     )
+
 
     neutral_count = sum(
+
         1
+
         for post in posts
+
         if post["sentiment"] == "neutral"
+
     )
 
+
     negative_count = sum(
+
         1
+
         for post in posts
+
         if post["sentiment"] == "negative"
+
     )
+
 
     positive = round(
         positive_count / total * 100
@@ -252,7 +252,12 @@ def calculate_results(posts):
         neutral_count / total * 100
     )
 
-    negative = 100 - positive - neutral
+    negative = (
+        100 -
+        positive -
+        neutral
+    )
+
 
     return (
         positive,
@@ -263,7 +268,7 @@ def calculate_results(posts):
 
 
 # =========================================================
-# GENERATE ANSWER
+# GENERATE AI ANALYSIS
 # =========================================================
 
 def generate_answer(
@@ -277,10 +282,10 @@ def generate_answer(
     if total == 0:
 
         return (
-            f"No recent results were found "
-            f"for '{keyword}'. "
-            f"Try another keyword."
+            f"No recent news results were "
+            f"found for '{keyword}'."
         )
+
 
     if positive >= negative and positive >= neutral:
 
@@ -294,48 +299,20 @@ def generate_answer(
 
         overall = "Neutral"
 
+
     return (
-        f"Based on {total} recent search results "
-        f"about '{keyword}', the overall sentiment "
-        f"is {overall}. "
-        f"Positive: {positive}%, "
-        f"Neutral: {neutral}%, "
-        f"Negative: {negative}%."
+
+        f"AI sentiment analysis of {total} "
+        f"recent news results about '{keyword}' "
+        f"shows an overall {overall.lower()} trend. "
+
+        f"The distribution is "
+
+        f"{positive}% positive, "
+        f"{neutral}% neutral, and "
+        f"{negative}% negative."
+
     )
-
-
-# =========================================================
-# BDA RESULTS
-# =========================================================
-
-def load_bda_results():
-
-    file_path = os.path.join(
-        os.path.dirname(__file__),
-        "bda_results.json"
-    )
-
-    if not os.path.exists(file_path):
-        return None
-
-    try:
-
-        with open(
-            file_path,
-            "r",
-            encoding="utf-8"
-        ) as file:
-
-            return json.load(file)
-
-    except Exception as error:
-
-        print(
-            "BDA result loading error:",
-            error
-        )
-
-        return None
 
 
 # =========================================================
@@ -347,12 +324,15 @@ def home():
 
     keyword = "artificial intelligence"
 
+
     posts, error = search_live(
         keyword
     )
 
+
     positive, neutral, negative, total = \
         calculate_results(posts)
+
 
     answer = generate_answer(
         keyword,
@@ -362,9 +342,9 @@ def home():
         total
     )
 
-    bda_data = load_bda_results()
 
     return render_template(
+
         "index.html",
 
         keyword=keyword,
@@ -381,9 +361,8 @@ def home():
 
         answer=answer,
 
-        error=error,
+        error=error
 
-        bda_data=bda_data
     )
 
 
@@ -402,20 +381,26 @@ def analyze():
         ""
     ).strip()
 
+
     if not keyword:
+
         keyword = "artificial intelligence"
+
 
     print(
         "Searching:",
         keyword
     )
 
+
     posts, error = search_live(
         keyword
     )
 
+
     positive, neutral, negative, total = \
         calculate_results(posts)
+
 
     answer = generate_answer(
         keyword,
@@ -425,7 +410,9 @@ def analyze():
         total
     )
 
+
     return render_template(
+
         "index.html",
 
         keyword=keyword,
@@ -442,9 +429,8 @@ def analyze():
 
         answer=answer,
 
-        error=error,
+        error=error
 
-        bda_data=load_bda_results()
     )
 
 
@@ -460,23 +446,35 @@ def api_analyze():
         "artificial intelligence"
     ).strip()
 
+
     if not keyword:
+
         keyword = "artificial intelligence"
+
 
     posts, error = search_live(
         keyword
     )
 
+
     positive, neutral, negative, total = \
         calculate_results(posts)
 
+
     answer = generate_answer(
+
         keyword,
+
         positive,
+
         neutral,
+
         negative,
+
         total
+
     )
+
 
     return jsonify({
 
@@ -500,44 +498,17 @@ def api_analyze():
 
 
 # =========================================================
-# BDA API
-# =========================================================
-
-@app.route("/api/bda")
-def api_bda():
-
-    data = load_bda_results()
-
-    if data is None:
-
-        return jsonify({
-
-            "available": False,
-
-            "message": (
-                "BDA results are not available. "
-                "Run the Hadoop MapReduce job first."
-            )
-
-        })
-
-    return jsonify({
-
-        "available": True,
-
-        "data": data
-
-    })
-
-
-# =========================================================
 # LOCAL DEVELOPMENT
 # =========================================================
 
 if __name__ == "__main__":
 
     app.run(
+
         debug=True,
+
         host="0.0.0.0",
+
         port=5000
+
     )
