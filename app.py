@@ -18,8 +18,7 @@ from sentiment_model import analyze_sentiment
 app = Flask(
     __name__,
     template_folder=".",
-    static_folder=".",
-    static_url_path=""
+    static_folder="."
 )
 
 
