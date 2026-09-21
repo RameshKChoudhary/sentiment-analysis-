@@ -11,16 +11,24 @@
 
     <title>SentimentAI | Live Sentiment Analysis</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='index.css') }}"
+    >
 
-    <!-- CHART.JS -->
     <script
         src="https://cdn.jsdelivr.net/npm/chart.js">
     </script>
 
 </head>
 
+
 <body>
+
+
+<!-- =====================================================
+     NAVBAR
+===================================================== -->
 
 <header class="navbar">
 
@@ -31,36 +39,42 @@
         </div>
 
         <div>
-            <h2>SentimentAI</h2>
+
+            <h2>
+                SentimentAI
+            </h2>
 
             <span>
                 Live Sentiment Analysis
             </span>
+
         </div>
 
     </div>
 
-<nav>
 
-    <a href="#dashboard">
-        Dashboard
-    </a>
+    <nav>
 
-    <a href="#analysis">
-        Analysis
-    </a>
- 
+        <a href="#dashboard">
+            Dashboard
+        </a>
 
-    <a href="#about">
-        About
-    </a>
+        <a href="#analysis">
+            Analysis
+        </a>
 
-</nav>
+        <a href="#about">
+            About
+        </a>
+
+    </nav>
 
 </header>
 
 
-<!-- HERO -->
+<!-- =====================================================
+     HERO
+===================================================== -->
 
 <section class="hero">
 
@@ -71,15 +85,22 @@
         </div>
 
         <h1>
+
             Social Media
-            <span>Sentiment Analysis</span>
+
+            <span>
+                Sentiment Analysis
+            </span>
+
         </h1>
 
         <p>
+
             Search any topic and analyze current online
             discussions using Natural Language Processing.
             The system classifies the latest results as
             positive, neutral, or negative.
+
         </p>
 
 
@@ -137,6 +158,20 @@
                 iPhone
             </button>
 
+            <button
+                type="button"
+                onclick="searchTopic('terrorism')"
+            >
+                Terrorism
+            </button>
+
+            <button
+                type="button"
+                onclick="searchTopic('Indian freedom')"
+            >
+                Indian Freedom
+            </button>
+
         </div>
 
     </div>
@@ -144,7 +179,9 @@
 </section>
 
 
-<!-- DASHBOARD -->
+<!-- =====================================================
+     DASHBOARD
+===================================================== -->
 
 <section
     id="dashboard"
@@ -198,7 +235,9 @@
     {% endif %}
 
 
-    <!-- STATISTICS -->
+    <!-- =================================================
+         STATISTICS
+    ================================================= -->
 
     <div class="stats">
 
@@ -305,7 +344,9 @@
     </div>
 
 
-    <!-- CHART -->
+    <!-- =================================================
+         CHART
+    ================================================= -->
 
     <div class="chart-grid">
 
@@ -342,7 +383,9 @@
         </div>
 
 
-        <!-- SUMMARY -->
+        <!-- =================================================
+             SUMMARY
+        ================================================= -->
 
         <div class="summary-card">
 
@@ -360,7 +403,7 @@
                 id="overallSentiment"
             >
 
-                {% if positive >= negative and positive >= neutral %}
+                {% if positive > negative and positive > neutral %}
 
                     <span class="big-emoji">
                         😊
@@ -370,7 +413,7 @@
                         Positive
                     </span>
 
-                {% elif negative >= positive and negative >= neutral %}
+                {% elif negative > positive and negative > neutral %}
 
                     <span class="big-emoji">
                         😠
@@ -439,7 +482,9 @@
 </section>
 
 
-<!-- RESULTS -->
+<!-- =====================================================
+     RESULTS
+===================================================== -->
 
 <section
     id="analysis"
@@ -461,15 +506,16 @@
         </div>
 
 
-        {% if total %}
+        <span
+            class="result-count"
+            id="resultCount"
+        >
 
-        <span class="result-count">
-
-            {{ total }} results found
+            {% if total %}
+                {{ total }} results found
+            {% endif %}
 
         </span>
-
-        {% endif %}
 
     </div>
 
@@ -515,7 +561,9 @@
                         target="_blank"
                         rel="noopener noreferrer"
                     >
+
                         {{ post.text }}
+
                     </a>
 
                 </p>
@@ -582,7 +630,9 @@
 </section>
 
 
-<!-- ABOUT -->
+<!-- =====================================================
+     ABOUT
+===================================================== -->
 
 <section
     id="about"
@@ -600,9 +650,12 @@
         </h2>
 
         <p>
+
             The system searches current online content,
-            processes the text using NLP, and classifies
-            the sentiment automatically.
+            cleans the retrieved text, analyzes sentiment
+            using a Transformer NLP model, and applies
+            contextual topic analysis.
+
         </p>
 
     </div>
@@ -622,8 +675,8 @@
             </h3>
 
             <p>
-                Fetches current results based on your
-                search keyword.
+                Fetches current news results based on
+                your search keyword.
             </p>
 
         </div>
@@ -640,8 +693,8 @@
             </h3>
 
             <p>
-                Collects and processes the retrieved
-                information.
+                Collects, cleans and processes the
+                retrieved information.
             </p>
 
         </div>
@@ -658,8 +711,8 @@
             </h3>
 
             <p>
-                Identifies positive, neutral and negative
-                language patterns.
+                Combines Transformer sentiment analysis
+                with contextual topic signals.
             </p>
 
         </div>
@@ -676,8 +729,8 @@
             </h3>
 
             <p>
-                Displays sentiment results using charts
-                and statistics.
+                Displays the resulting sentiment
+                distribution using charts.
             </p>
 
         </div>
@@ -685,232 +738,11 @@
     </div>
 
 </section>
-<!-- BDA SECTION -->
-<!-- 
-<section class="technology" id="bda">
 
-    <div class="section-heading center">
 
-        <p class="small-title">
-            BIG DATA ANALYTICS
-        </p>
-
-        <h2>
-            Hadoop Analytics
-        </h2>
-
-        <p>
-            Large-scale sentiment data is processed using
-            Hadoop HDFS and MapReduce.
-        </p>
-
-    </div>
-
-
-    <div class="stats">
-
-        <div class="stat-card total">
-
-            <div class="stat-top">
-
-                <span class="stat-icon">
-                    🗄️
-                </span>
-
-                <span>
-                    BDA Records
-                </span>
-
-            </div>
-
-            <h3 id="bdaTotal">
-                {% if bda_data %}
-                    {{ bda_data.total }}
-                {% else %}
-                    0
-                {% endif %}
-            </h3>
-
-            <p>
-                Records processed
-            </p>
-
-        </div>
-
-
-        <div class="stat-card positive">
-
-            <div class="stat-top">
-
-                <span class="stat-icon">
-                    🟢
-                </span>
-
-                <span>
-                    BDA Positive
-                </span>
-
-            </div>
-
-            <h3 id="bdaPositive">
-
-                {% if bda_data %}
-                    {{ bda_data.positive }}%
-                {% else %}
-                    0%
-                {% endif %}
-
-            </h3>
-
-            <p>
-                Hadoop result
-            </p>
-
-        </div>
-
-
-        <div class="stat-card neutral">
-
-            <div class="stat-top">
-
-                <span class="stat-icon">
-                    🟡
-                </span>
-
-                <span>
-                    BDA Neutral
-                </span>
-
-            </div>
-
-            <h3 id="bdaNeutral">
-
-                {% if bda_data %}
-                    {{ bda_data.neutral }}%
-                {% else %}
-                    0%
-                {% endif %}
-
-            </h3>
-
-            <p>
-                Hadoop result
-            </p>
-
-        </div>
-
-
-        <div class="stat-card negative">
-
-            <div class="stat-top">
-
-                <span class="stat-icon">
-                    🔴
-                </span>
-
-                <span>
-                    BDA Negative
-                </span>
-
-            </div>
-
-            <h3 id="bdaNegative">
-
-                {% if bda_data %}
-                    {{ bda_data.negative }}%
-                {% else %}
-                    0%
-                {% endif %}
-
-            </h3>
-
-            <p>
-                Hadoop result
-            </p>
-
-        </div>
-
-    </div>
-
-
-    <div class="tech-grid">
-
-        <div class="tech-card">
-
-            <div>
-                🗄️
-            </div>
-
-            <h3>
-                HDFS
-            </h3>
-
-            <p>
-                Distributed storage for large volumes
-                of sentiment data.
-            </p>
-
-        </div>
-
-
-        <div class="tech-card">
-
-            <div>
-                ⚙️
-            </div>
-
-            <h3>
-                MapReduce
-            </h3>
-
-            <p>
-                Distributed processing and aggregation
-                of sentiment records.
-            </p>
-
-        </div>
-
-
-        <div class="tech-card">
-
-            <div>
-                📊
-            </div>
-
-            <h3>
-                Data Aggregation
-            </h3>
-
-            <p>
-                Combines sentiment counts from
-                multiple data records.
-            </p>
-
-        </div>
-
-
-        <div class="tech-card">
-
-            <div>
-                🚀
-            </div>
-
-            <h3>
-                Scalable Analytics
-            </h3>
-
-            <p>
-                Designed to process larger datasets
-                using distributed computing.
-            </p>
-
-        </div>
-
-    </div>
-
-</section> -->
-
-<!-- FOOTER -->
+<!-- =====================================================
+     FOOTER
+===================================================== -->
 
 <footer>
 
@@ -929,7 +761,12 @@
 </footer>
 
 
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
 <script>
+
 
 /* =====================================================
    QUICK SEARCH
@@ -942,7 +779,9 @@ function searchTopic(topic) {
             'input[name="keyword"]'
         );
 
-    if (!input) return;
+    if (!input) {
+        return;
+    }
 
     input.value = topic;
 
@@ -954,18 +793,22 @@ function searchTopic(topic) {
 
 
 /* =====================================================
-   CHART
+   INITIAL CHART VALUES
 ===================================================== */
 
-const positive =
+let positive =
     Number("{{ positive or 0 }}");
 
-const neutral =
+let neutral =
     Number("{{ neutral or 0 }}");
 
-const negative =
+let negative =
     Number("{{ negative or 0 }}");
 
+
+/* =====================================================
+   CHART
+===================================================== */
 
 const chartElement =
     document.getElementById(
@@ -973,9 +816,12 @@ const chartElement =
     );
 
 
+let sentimentChart = null;
+
+
 if (chartElement) {
 
-    const sentimentChart =
+    sentimentChart =
         new Chart(
             chartElement.getContext("2d"),
             {
@@ -1033,88 +879,453 @@ if (chartElement) {
             }
         );
 
-
-    /* =================================================
-       LIVE UPDATE
-    ================================================= */
-
-    const currentKeyword =
-        "{{ keyword or '' }}";
+}
 
 
-    async function liveUpdate() {
+/* =====================================================
+   CURRENT KEYWORD
+===================================================== */
 
-        if (!currentKeyword) {
-            return;
-        }
-
-
-        try {
-
-            const response =
-                await fetch(
-                    "/api/analyze?keyword=" +
-                    encodeURIComponent(
-                        currentKeyword
-                    )
-                );
+const currentKeyword =
+    "{{ keyword or '' }}";
 
 
-            if (!response.ok) {
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
 
-                throw new Error(
-                    "Server returned " +
-                    response.status
-                );
+function escapeHtml(value) {
+
+    if (value === null || value === undefined) {
+
+        return "";
+
+    }
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =====================================================
+   RENDER LIVE POSTS
+===================================================== */
+
+function renderPosts(posts) {
+
+    const container =
+        document.getElementById(
+            "postsContainer"
+        );
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!posts || posts.length === 0) {
+
+        container.innerHTML = `
+
+            <div class="empty-result">
+
+                <div>
+                    🔍
+                </div>
+
+                <h3>
+                    No results found
+                </h3>
+
+                <p>
+                    Search for a topic to analyze current data.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        posts.map(
+            post => {
+
+                let sentimentLabel =
+                    "😐 Neutral";
+
+
+                if (
+                    post.sentiment ===
+                    "positive"
+                ) {
+
+                    sentimentLabel =
+                        "😊 Positive";
+
+                }
+
+                else if (
+                    post.sentiment ===
+                    "negative"
+                ) {
+
+                    sentimentLabel =
+                        "😠 Negative";
+
+                }
+
+
+                const avatar =
+                    post.user
+                        ? post.user
+                            .charAt(0)
+                            .toUpperCase()
+                        : "N";
+
+
+                return `
+
+                    <div class="post">
+
+                        <div class="post-user">
+
+                            <div class="avatar">
+
+                                ${escapeHtml(
+                                    avatar
+                                )}
+
+                            </div>
+
+                            <div>
+
+                                <strong>
+
+                                    ${escapeHtml(
+                                        post.user ||
+                                        "News"
+                                    )}
+
+                                </strong>
+
+                                <span>
+
+                                    ${escapeHtml(
+                                        post.time ||
+                                        "Recently"
+                                    )}
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <p class="post-text">
+
+                            <a
+                                href="${escapeHtml(
+                                    post.link ||
+                                    "#"
+                                )}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+
+                                ${escapeHtml(
+                                    post.text
+                                )}
+
+                            </a>
+
+                        </p>
+
+
+                        <div class="post-bottom">
+
+                            <span
+                                class="sentiment ${escapeHtml(
+                                    post.sentiment
+                                )}"
+                            >
+
+                                ${sentimentLabel}
+
+                            </span>
+
+
+                            <span class="score">
+
+                                Score:
+                                ${escapeHtml(
+                                    post.score
+                                )}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                `;
 
             }
+        )
+        .join("");
+
+}
 
 
-            const data =
-                await response.json();
+/* =====================================================
+   UPDATE OVERALL SENTIMENT
+===================================================== */
+
+function updateOverallSentiment(
+    positiveValue,
+    neutralValue,
+    negativeValue
+) {
+
+    let sentiment =
+        "Neutral";
+
+    let emoji =
+        "😐";
 
 
-            console.log(
-                "Live update:",
-                data
+    if (
+        positiveValue >
+        negativeValue &&
+        positiveValue >
+        neutralValue
+    ) {
+
+        sentiment =
+            "Positive";
+
+        emoji =
+            "😊";
+
+    }
+
+    else if (
+        negativeValue >
+        positiveValue &&
+        negativeValue >
+        neutralValue
+    ) {
+
+        sentiment =
+            "Negative";
+
+        emoji =
+            "😠";
+
+    }
+
+
+    const element =
+        document.getElementById(
+            "overallSentiment"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    element.innerHTML =
+
+        '<span class="big-emoji">' +
+
+        emoji +
+
+        '</span>' +
+
+        '<span>' +
+
+        sentiment +
+
+        '</span>';
+
+}
+
+
+/* =====================================================
+   LIVE UPDATE
+===================================================== */
+
+async function liveUpdate() {
+
+    if (!currentKeyword) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/analyze?keyword=" +
+                encodeURIComponent(
+                    currentKeyword
+                ),
+                {
+                    cache: "no-store"
+                }
             );
 
 
-            /* Update numbers */
+        if (!response.ok) {
 
+            throw new Error(
+                "Server returned " +
+                response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Live update:",
+            data
+        );
+
+
+        /* -----------------------------------------------
+           Update statistics
+        ----------------------------------------------- */
+
+        const positiveElement =
             document.getElementById(
                 "positiveValue"
-            ).textContent =
-                data.positive + "%";
+            );
 
-
+        const neutralElement =
             document.getElementById(
                 "neutralValue"
-            ).textContent =
-                data.neutral + "%";
+            );
 
-
+        const negativeElement =
             document.getElementById(
                 "negativeValue"
-            ).textContent =
-                data.negative + "%";
+            );
 
-
+        const totalElement =
             document.getElementById(
                 "totalValue"
-            ).textContent =
+            );
+
+
+        if (positiveElement) {
+
+            positiveElement.textContent =
+                data.positive + "%";
+
+        }
+
+
+        if (neutralElement) {
+
+            neutralElement.textContent =
+                data.neutral + "%";
+
+        }
+
+
+        if (negativeElement) {
+
+            negativeElement.textContent =
+                data.negative + "%";
+
+        }
+
+
+        if (totalElement) {
+
+            totalElement.textContent =
                 data.total;
 
+        }
 
-            /* Update answer */
 
+        /* -----------------------------------------------
+           Update result count
+        ----------------------------------------------- */
+
+        const resultCount =
+            document.getElementById(
+                "resultCount"
+            );
+
+
+        if (resultCount) {
+
+            resultCount.textContent =
+                data.total +
+                " results found";
+
+        }
+
+
+        /* -----------------------------------------------
+           Update AI answer
+        ----------------------------------------------- */
+
+        const answerText =
             document.getElementById(
                 "answerText"
-            ).textContent =
+            );
+
+
+        if (answerText) {
+
+            answerText.textContent =
                 data.answer;
 
+        }
 
-            /* Update chart */
+
+        /* -----------------------------------------------
+           Update chart
+        ----------------------------------------------- */
+
+        if (sentimentChart) {
 
             sentimentChart.data.datasets[0].data = [
 
@@ -1128,78 +1339,115 @@ if (chartElement) {
 
             sentimentChart.update();
 
-
-            /* Update overall sentiment */
-
-            let sentiment = "Neutral";
-
-            let emoji = "😐";
+        }
 
 
-            if (
-                data.positive >= data.neutral &&
-                data.positive >= data.negative
-            ) {
+        /* -----------------------------------------------
+           Update overall sentiment
+        ----------------------------------------------- */
 
-                sentiment = "Positive";
+        updateOverallSentiment(
 
-                emoji = "😊";
+            data.positive,
 
-            }
+            data.neutral,
 
-            else if (
-                data.negative >= data.neutral &&
-                data.negative >= data.positive
-            ) {
+            data.negative
 
-                sentiment = "Negative";
-
-                emoji = "😠";
-
-            }
+        );
 
 
-            document.getElementById(
-                "overallSentiment"
-            ).innerHTML =
+        /* -----------------------------------------------
+           Update news posts
+        ----------------------------------------------- */
 
-                '<span class="big-emoji">' +
-                emoji +
-                '</span>' +
-
-                '<span>' +
-                sentiment +
-                '</span>';
+        renderPosts(
+            data.posts
+        );
 
 
+        /* -----------------------------------------------
+           Status
+        ----------------------------------------------- */
+
+        const statusText =
             document.getElementById(
                 "statusText"
-            ).textContent =
-                "Live";
+            );
 
+
+        if (statusText) {
+
+            statusText.textContent =
+                "Live";
 
         }
 
-        catch (error) {
 
-            console.error(
-                "Live update error:",
-                error
+        const progressBar =
+            document.getElementById(
+                "progressBar"
             );
 
-            document.getElementById(
-                "statusText"
-            ).textContent =
-                "Offline";
+
+        if (progressBar) {
+
+            progressBar.style.width =
+                "100%";
 
         }
 
     }
 
+    catch (error) {
 
-    /*
-       Update every 60 seconds
-    */
+        console.error(
+            "Live update error:",
+            error
+        );
+
+
+        const statusText =
+            document.getElementById(
+                "statusText"
+            );
+
+
+        if (statusText) {
+
+            statusText.textContent =
+                "Offline";
+
+        }
+
+
+        const progressBar =
+            document.getElementById(
+                "progressBar"
+            );
+
+
+        if (progressBar) {
+
+            progressBar.style.width =
+                "40%";
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   AUTO REFRESH
+===================================================== */
+
+/*
+   Refresh the dashboard every 60 seconds.
+*/
+
+if (currentKeyword) {
 
     setInterval(
         liveUpdate,
@@ -1207,6 +1455,7 @@ if (chartElement) {
     );
 
 }
+
 
 </script>
 

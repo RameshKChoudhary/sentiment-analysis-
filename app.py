@@ -1,3 +1,4 @@
+ 
 from flask import Flask, render_template, request, jsonify
 
 import requests
@@ -5,6 +6,7 @@ import feedparser
 import re
 
 from urllib.parse import quote
+from html import unescape
 
 from sentiment_model import analyze_sentiment
 
@@ -19,6 +21,45 @@ app = Flask(
     static_folder=".",
     static_url_path=""
 )
+
+
+# =========================================================
+# TEXT CLEANING
+# =========================================================
+
+def clean_text(text):
+    """
+    Clean HTML/RSS text before sending it to the
+    sentiment model.
+    """
+
+    if not text:
+        return ""
+
+    text = unescape(str(text))
+
+    # Remove HTML tags
+    text = re.sub(
+        r"<[^>]+>",
+        " ",
+        text
+    )
+
+    # Remove URLs
+    text = re.sub(
+        r"https?://\S+|www\.\S+",
+        " ",
+        text
+    )
+
+    # Remove excessive whitespace
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    )
+
+    return text.strip()
 
 
 # =========================================================
@@ -38,7 +79,6 @@ def search_live(keyword):
     )
 
     headers = {
-
         "User-Agent": (
             "Mozilla/5.0 "
             "(Windows NT 10.0; Win64; x64) "
@@ -46,7 +86,6 @@ def search_live(keyword):
             "(KHTML, like Gecko) "
             "Chrome/131.0 Safari/537.36"
         )
-
     }
 
     try:
@@ -65,44 +104,68 @@ def search_live(keyword):
 
         results = []
 
+        # Prevent duplicate news
+        seen_links = set()
+        seen_titles = set()
 
-        for entry in feed.entries[:20]:
+        for entry in feed.entries[:30]:
 
-            title = entry.get(
-                "title",
-                ""
+            title = clean_text(
+                entry.get(
+                    "title",
+                    ""
+                )
             )
 
-            description = entry.get(
-                "description",
-                ""
+            description = clean_text(
+                entry.get(
+                    "description",
+                    ""
+                )
             )
 
+            if not title:
+                continue
 
-            # Remove HTML from description
-
-            description = re.sub(
-                r"<[^>]+>",
+            # Remove duplicate articles
+            normalized_title = re.sub(
+                r"[^a-z0-9]+",
                 " ",
-                description
+                title.lower()
+            ).strip()
+
+            link = entry.get(
+                "link",
+                "#"
             )
 
+            if (
+                normalized_title in seen_titles
+                or link in seen_links
+            ):
+                continue
 
-            # Combine title + description
+            seen_titles.add(
+                normalized_title
+            )
 
+            seen_links.add(
+                link
+            )
+
+            # Combine title and description
             text = (
-                title +
-                " " +
-                description
-            )
-
+                f"{title}. "
+                f"{description}"
+            ).strip()
 
             # =================================================
-            # AI SENTIMENT ANALYSIS
+            # AI + CONTEXTUAL SENTIMENT ANALYSIS
             # =================================================
 
             sentiment_result = analyze_sentiment(
-                text
+                text,
+                topic=keyword
             )
 
             sentiment = sentiment_result[
@@ -113,10 +176,10 @@ def search_live(keyword):
                 "score"
             ]
 
-
-            # Convert confidence into
-            # a dashboard-friendly score
-
+            # Signed sentiment score
+            # Positive = positive
+            # Negative = negative
+            # Neutral = 0
             if sentiment == "positive":
 
                 score = round(
@@ -135,12 +198,10 @@ def search_live(keyword):
 
                 score = 0
 
-
             published = entry.get(
                 "published",
                 "Recently"
             )
-
 
             source = entry.get(
                 "source",
@@ -149,7 +210,6 @@ def search_live(keyword):
 
             source_name = ""
 
-
             if hasattr(source, "get"):
 
                 source_name = source.get(
@@ -157,11 +217,9 @@ def search_live(keyword):
                     ""
                 )
 
-
             if not source_name:
 
                 source_name = "News"
-
 
             results.append({
 
@@ -171,22 +229,19 @@ def search_live(keyword):
 
                 "text": title,
 
+                "description": description,
+
                 "sentiment": sentiment,
 
                 "score": score,
 
                 "confidence": confidence,
 
-                "link": entry.get(
-                    "link",
-                    "#"
-                )
+                "link": link
 
             })
 
-
         return results, None
-
 
     except Exception as error:
 
@@ -210,39 +265,23 @@ def calculate_results(posts):
 
         return 0, 0, 0, 0
 
-
     positive_count = sum(
-
         1
-
         for post in posts
-
-        if post["sentiment"] == "positive"
-
+        if post.get("sentiment") == "positive"
     )
-
 
     neutral_count = sum(
-
         1
-
         for post in posts
-
-        if post["sentiment"] == "neutral"
-
+        if post.get("sentiment") == "neutral"
     )
-
 
     negative_count = sum(
-
         1
-
         for post in posts
-
-        if post["sentiment"] == "negative"
-
+        if post.get("sentiment") == "negative"
     )
-
 
     positive = round(
         positive_count / total * 100
@@ -252,17 +291,31 @@ def calculate_results(posts):
         neutral_count / total * 100
     )
 
-    negative = (
-        100 -
-        positive -
-        neutral
+    negative = round(
+        negative_count / total * 100
     )
 
-
-    return (
+    # Ensure total is exactly 100
+    values = [
         positive,
         neutral,
-        negative,
+        negative
+    ]
+
+    difference = 100 - sum(values)
+
+    if difference != 0:
+
+        largest_index = values.index(
+            max(values)
+        )
+
+        values[largest_index] += difference
+
+    return (
+        values[0],
+        values[1],
+        values[2],
         total
     )
 
@@ -286,28 +339,31 @@ def generate_answer(
             f"found for '{keyword}'."
         )
 
+    if (
+        positive > negative
+        and positive > neutral
+    ):
 
-    if positive >= negative and positive >= neutral:
+        overall = "positive"
 
-        overall = "Positive"
+    elif (
+        negative > positive
+        and negative > neutral
+    ):
 
-    elif negative >= positive and negative >= neutral:
-
-        overall = "Negative"
+        overall = "negative"
 
     else:
 
-        overall = "Neutral"
-
+        overall = "neutral"
 
     return (
 
         f"AI sentiment analysis of {total} "
         f"recent news results about '{keyword}' "
-        f"shows an overall {overall.lower()} trend. "
+        f"shows an overall {overall} trend. "
 
         f"The distribution is "
-
         f"{positive}% positive, "
         f"{neutral}% neutral, and "
         f"{negative}% negative."
@@ -316,23 +372,17 @@ def generate_answer(
 
 
 # =========================================================
-# HOME
+# RENDER DASHBOARD
 # =========================================================
 
-@app.route("/")
-def home():
-
-    keyword = "artificial intelligence"
-
-
-    posts, error = search_live(
-        keyword
-    )
-
+def dashboard_response(
+    keyword,
+    posts,
+    error
+):
 
     positive, neutral, negative, total = \
         calculate_results(posts)
-
 
     answer = generate_answer(
         keyword,
@@ -341,7 +391,6 @@ def home():
         negative,
         total
     )
-
 
     return render_template(
 
@@ -363,6 +412,26 @@ def home():
 
         error=error
 
+    )
+
+
+# =========================================================
+# HOME
+# =========================================================
+
+@app.route("/")
+def home():
+
+    keyword = "artificial intelligence"
+
+    posts, error = search_live(
+        keyword
+    )
+
+    return dashboard_response(
+        keyword,
+        posts,
+        error
     )
 
 
@@ -381,56 +450,23 @@ def analyze():
         ""
     ).strip()
 
-
     if not keyword:
 
         keyword = "artificial intelligence"
-
 
     print(
         "Searching:",
         keyword
     )
 
-
     posts, error = search_live(
         keyword
     )
 
-
-    positive, neutral, negative, total = \
-        calculate_results(posts)
-
-
-    answer = generate_answer(
+    return dashboard_response(
         keyword,
-        positive,
-        neutral,
-        negative,
-        total
-    )
-
-
-    return render_template(
-
-        "index.html",
-
-        keyword=keyword,
-
-        posts=posts,
-
-        positive=positive,
-
-        neutral=neutral,
-
-        negative=negative,
-
-        total=total,
-
-        answer=answer,
-
-        error=error
-
+        posts,
+        error
     )
 
 
@@ -446,20 +482,21 @@ def api_analyze():
         "artificial intelligence"
     ).strip()
 
-
     if not keyword:
 
         keyword = "artificial intelligence"
 
+    print(
+        "Live search:",
+        keyword
+    )
 
     posts, error = search_live(
         keyword
     )
 
-
     positive, neutral, negative, total = \
         calculate_results(posts)
-
 
     answer = generate_answer(
 
@@ -474,7 +511,6 @@ def api_analyze():
         total
 
     )
-
 
     return jsonify({
 
@@ -511,4 +547,4 @@ if __name__ == "__main__":
 
         port=5000
 
-    )
+    ) 
